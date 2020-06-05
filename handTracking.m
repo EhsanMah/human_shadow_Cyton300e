@@ -1,6 +1,4 @@
-clear all
-clc
-clf
+function[x,y,z] = getHandPos()
 %% Hand Tracking Algorithm
   imaqreset;
 %create color and depth kinect videoinput objects
@@ -56,21 +54,24 @@ if  sum(depthMetaData.IsBodyTracked) >0
 skeletonJoints = depthMetaData.DepthJointIndices (:,:,depthMetaData.IsBodyTracked);
 hold on;
 
-for i = 15:16
+for i = 14:16
 for body = 1:nBodies
 X1 = [skeletonJoints(SkeletonConnectionMap(i,1),1,body); skeletonJoints(SkeletonConnectionMap(i,2),1,body)];
 Y1 = [skeletonJoints(SkeletonConnectionMap(i,1),2,body), skeletonJoints(SkeletonConnectionMap(i,2),2,body)];
 jointPos = depthMetaData.JointPositions(:,:,1);
-handPos = jointPos(22,:);
+handPos = jointPos(8,:);
 disp("Hand Position Changed")
 disp(handPos)
 %   h = plot(skeletonJoints(SkeletonConnectionMap(i,1),1,body), skeletonJoints(SkeletonConnectionMap(i,2),1,body),'.','MarkerSize',15); % Plota no imshow as juntas
  line(X1,Y1, 'LineWidth', 2, 'LineStyle', '-' , 'Marker', '+', 'Color', colors(body));
 end
-   
+x= handPos(1,1);
+y= handPos(1,2);
+z= handPos(1,3);
 end
 hold off;
 
 end
 end
 stop(depthVid);
+end
