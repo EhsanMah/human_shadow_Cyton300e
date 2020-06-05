@@ -2,9 +2,13 @@ classdef UR10 < handle
     properties
         %> Robot model
         model;
+        Brick_h;
+        b;
+        brickVertexCount;
+        BrickPose;
 %         q = zeros(1,7);  
         %> workspace
-        workspace = [-1.5 1.5 -1.5 1.5 -0.6 1.5];   
+        workspace = [-1.5 1.5 -1.5 1.5 -0.4 1.5];   
                
         %> If we have a tool model which will replace the final links model, combined ply file of the tool model and the final link models
         toolModelFilename = []; % Available are: 'DabPrintNozzleTool.ply';        
@@ -20,14 +24,21 @@ classdef UR10 < handle
                 self.toolModelFilename = toolModelAndTCPFilenames{1};
                 self.toolParametersFilename = toolModelAndTCPFilenames{2};
             end
-               Environment();
-            self.GetUR10Robot();
+%                   Environment();
+             self.GetUR10Robot();
              self.PlotAndColourRobot();%robot,workspace);
 %             self.movement();
-              self.RMRC();
+             input('Press enter to continue');
+%              [brick,a,VertexCount,Pose]=self.brickmove();
+%              self.Brick_h = brick;
+%              self.b = a;
+%              self.brickVertexCount= VertexCount;
+%              self.BrickPose= Pose;
+%              disp('brick set')
+             self.RMRC(0,-0.2,0.1);
+%                 self.RMRC(0.23,0,0.1);  
 
-
-            drawnow            
+            drawnow()            
 
         end
 
@@ -39,11 +50,11 @@ classdef UR10 < handle
             base = [0 0 0];
 
     L1 = Link('d',0.062668,'a',0,'alpha',pi/2,'qlim',deg2rad([-360,360]));
-    L2 = Link('d',0,'a',0,'alpha',-pi/2,'qlim', deg2rad([-360,360])); 
+    L2 = Link('d',0,'a',0,'alpha',-pi/2,'qlim', deg2rad([-110,110])); 
     L3 = Link('d',0.124096,'a',0,'alpha',pi/2,'qlim', deg2rad([-360,360]));
-    L4 = Link('d',0,'a',0.065868,'alpha',-pi/2,'qlim',deg2rad([-360,360])); 
-    L5 = Link('d',0,'a',0.065868,'alpha',pi/2,'qlim',deg2rad([-360,360]));
-    L6 = Link('d',0,'a',0,'alpha',-pi/2,'qlim',deg2rad([-360,360]));
+    L4 = Link('d',0,'a',0.065868,'alpha',-pi/2,'qlim',deg2rad([-20,170])); 
+    L5 = Link('d',0,'a',0.065868,'alpha',pi/2,'qlim',deg2rad([-110,110]));
+    L6 = Link('d',0,'a',0,'alpha',-pi/2,'qlim',deg2rad([-200,5]));
     L7 = Link('d',0.115545,'a',0,'alpha',0,'qlim',deg2rad([-360,360]));
 
             self.model = SerialLink([L1 L2 L3 L4 L5 L6 L7],'name',name);
@@ -94,6 +105,7 @@ classdef UR10 < handle
             end
         end
         
+        
 
              %% Movement        
         function movement(self)
@@ -113,15 +125,15 @@ classdef UR10 < handle
 
         end
         
- 
-        
+
+       
         
         %% Move RMRC Taken From Tutorial
         
-        function RMRC(self)
-
+        function RMRC(self, goalX, goalY, goalZ)
+            
 t = 5;             % Total time (s)
-deltaT = 0.02;      % Control frequency
+deltaT = 0.05;      % Control frequency
 steps = t/deltaT;   % No. of steps for simulation
 delta = 2*pi/steps; % Small angle change
 epsilon = 0.1;      % Threshold value for manipulability/Damped Least Squares
@@ -135,29 +147,27 @@ theta = zeros(3,steps);         % Array for roll-pitch-yaw angles
 x = zeros(3,steps);             % Array for x-y-z trajectory
 positionError = zeros(3,steps); % For plotting trajectory error
 angleError = zeros(3,steps);    % For plotting trajectory error
-position = self.model.fkine(self.model.getpos());
-
+currentAngles = self.model.getpos();
+currentPos  = self.model.fkine(currentAngles);
 % 1.3) Set up trajectory, initial pose
+
+
 s = lspb(0,1,steps);                % Trapezoidal trajectory scalar
 for i=1:steps
-    x(1,i) = (1-s(i))*position(1,3) + s(i)*0.15; % Points in x
-    x(2,i) = (1-s(i))*position(2,3) + s(i)*0.25; % Points in y
-    x(3,i) = (1-s(i))*0.25 + s(i)*0.15; % Points in z
+    x(1,i) = (1-s(i))*currentPos(1,4) + s(i)*goalX; % Points in x
+    x(2,i) = (1-s(i))*currentPos(2,4) + s(i)*goalY; % Points in y
+    x(3,i) = (1-s(i))*currentPos(3,4) + s(i)*goalZ; % Points in z
     theta(1,i) = 0;                 % Roll angle 
     theta(2,i) = 5*pi/9;            % Pitch angle
     theta(3,i) = 0;                 % Yaw angle
 end
-%  for i=1:steps
-%     x(1,i) = (1-s(i))*position(1,3) + s(i)*0.3; % Points in x
-%     x(2,i) = (1-s(i))*position(2,3) + s(i)*-0.3; % Points in y
-%      x(3,i) = (1-s(i))*position(3,3) + s(i)*0.3; % Points in z
-%     theta(1,i) = 5*pi/9;                 % Roll angle 
-%     theta(2,i) = 5*pi/9;            % Pitch angle
-%     theta(3,i) = 5*pi/9;                 % Yaw angle
-% end
-T = [rpy2r(theta(1,1),theta(2,1),theta(3,1)) x(:,1);zeros(1,3) 1];          % Create transformation of first point and angle
- q0 = ones(1,7);                                                            % Initial guess for joint angles
-qMatrix(1,:) = self.model.ikcon(T,q0);                                            % Solve joint angles to achieve first waypoint
+
+
+    
+
+ T = [rpy2r(theta(1,1),theta(2,1),theta(3,1)) x(:,1);zeros(1,3) 1];          % Create transformation of first point and angle
+  q0 = zeros(1,7);                                                            % Initial guess for joint angles
+   qMatrix(1,:) = self.model.ikcon(T,q0);                                            % Solve joint angles to achieve first waypoint
 
 % 1.4) Track the trajectory with RMRC
 for i = 1:steps-1
@@ -190,48 +200,73 @@ for i = 1:steps-1
     qMatrix(i+1,:) = qMatrix(i,:) + deltaT*qdot(i,:);                         	% Update next joint state based on joint velocities
     positionError(:,i) = x(:,i+1) - T(1:3,4);                               % For plotting
     angleError(:,i) = deltaTheta;                                           % For plotting
+
+    
+            
 end
 
 % % 1.5) Plot the results
-% figure(1)
+% % figure(1)
 % plot3(x(1,:),x(2,:),x(3,:),'k.','LineWidth',1)
 self.model.plot(qMatrix,'trail','r-')
-% 
-for i = 1:7
-    figure(2)
-    subplot(3,2,i)
-    plot(qMatrix(:,i),'k','LineWidth',1)
-    title(['Joint ', num2str(i)])
-    ylabel('Angle (rad)')
-    refline(0,self.model.qlim(i,1));
-    refline(0,self.model.qlim(i,2));
+% self.BrickPose = makehgtform('translate',currentPos(1:3,4)');
+%             updatedPoints = [self.BrickPose * [self.b,ones(self.brickVertexCount,1)]']';
+%             self.Brick_h.Vertices = updatedPoints(:,1:3);
+%            drawnow();
     
-    figure(3)
-    subplot(3,2,i)
-    plot(qdot(:,i),'k','LineWidth',1)
-    title(['Joint ',num2str(i)]);
-    ylabel('Velocity (rad/s)')
-    refline(0,0)
-end
 
-figure(4)
-subplot(2,1,1)
-plot(positionError'*1000,'LineWidth',1)
-refline(0,0)
-xlabel('Step')
-ylabel('Position Error (mm)')
-legend('X-Axis','Y-Axis','Z-Axis')
 
-subplot(2,1,2)
-plot(angleError','LineWidth',1)
-refline(0,0)
-xlabel('Step')
-ylabel('Angle Error (rad)')
-legend('Roll','Pitch','Yaw')
-figure(5)
-plot(m,'k','LineWidth',1)
-refline(0,epsilon)
-title('Manipulability')
+% for i = 1:7
+%     figure(2)
+%     subplot(3,2,i)
+%     plot(qMatrix(:,i),'k','LineWidth',1)
+%     title(['Joint ', num2str(i)])
+%     ylabel('Angle (rad)')
+%     refline(0,self.model.qlim(i,1));
+%     refline(0,self.model.qlim(i,2));
+%     
+%     figure(3)
+%     subplot(3,2,i)
+%     plot(qdot(:,i),'k','LineWidth',1)
+%     title(['Joint ',num2str(i)]);
+%     ylabel('Velocity (rad/s)')
+%     refline(0,0)
+% end
+% 
+% figure(4)
+% subplot(2,1,1)
+% plot(positionError'*1000,'LineWidth',1)
+% refline(0,0)
+% xlabel('Step')
+% ylabel('Position Error (mm)')
+% legend('X-Axis','Y-Axis','Z-Axis')
+% 
+% subplot(2,1,2)
+% plot(angleError','LineWidth',1)
+% refline(0,0)
+% xlabel('Step')
+% ylabel('Angle Error (rad)')
+% legend('Roll','Pitch','Yaw')
+% figure(5)
+% plot(m,'k','LineWidth',1)
+% refline(0,epsilon)
+% title('Manipulability')
+        end
+        
+         %% Move Brick
+         function [Brick_h,b,brickVertexCount,BrickPose]=brickmove(self)
+                   %Brick 
+                  
+        [f,b,data] = plyread('brick.ply','tri');
+        vertexColours = [data.vertex.red, data.vertex.green, data.vertex.blue] / 255;
+        Brick_h = trisurf(f,b(:,1) + 0,b(:,2) - 0.2, b(:,3) + 0.1 ...
+            ,'FaceVertexCData',vertexColours,'EdgeColor','interp','EdgeLighting','flat')
+        
+        brickVertexCount = size(b,1);
+        BrickPose = eye(6);
+        hold on; 
+
+        
         end
     end
 end
