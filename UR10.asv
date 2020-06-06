@@ -6,7 +6,6 @@ classdef UR10 < handle
         b;
         brickVertexCount;
         BrickPose;
-        CollisionFlag = 0;
 %         q = zeros(1,7);  
         %> workspace
         workspace = [-1.5 1.5 -1.5 1.5 -0.4 1.5];   
@@ -268,16 +267,6 @@ self.model.plot(qMatrix,'trail','r-')
         hold on; 
 
         
-         end
-         
-         function detectCollision(self,qMatrix)
-           
-
-                if wall_1==true || wall_2 == true
-                self.CollisionFlag =1;
-                disp('avoiding collition')
-
-                end
          end
         
              %% IsIntersectionPointInsideTriangle
