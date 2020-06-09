@@ -3,9 +3,41 @@ clc
 clf
 
 %% movement
-Cyton = UR10
+       
 
-load('cyton_q.mat');
+Cyton = UR10
+   Environment();
+%  Cyton.Enviro();
+% Cyton.brickmove(0.2345,0.03771,0.09823)
+pickingLocation = [0.21,0,0.7];
+
+% pickingLocation = [0,-0.2,0.1]
+% dropingLocation=[0.2345,0.3,0.75]
+ input('press  enter')
+ Cyton.pickBrick(0,-0.2,0.1)
+ Cyton.dropBrick(0.2,0,0.25,1,Cyton.brickVertexCount,Cyton.b);
+ Cyton.dropBrick(0.27,0.05,0.09,1,Cyton.brickVertexCount,Cyton.b);
+ Cyton.pickBrick(0.2,0,0.25)
+ Cyton.pickBrick(0.041,-0.2,0.1)
+ Cyton.dropBrick(0.2,0,0.25,2,Cyton.brickVertexCount1,Cyton.b1);
+ Cyton.dropBrick(0.27,-0.04,0.09,2,Cyton.brickVertexCount1,Cyton.b1);
+ Cyton.pickBrick(0.2,0,0.25)
+ Cyton.pickBrick(-0.041,-0.2,0.1)
+ Cyton.dropBrick(0.1,-0.2,0.3,3,Cyton.brickVertexCount2,Cyton.b2);
+ Cyton.dropBrick(0.25,-0.09,0.085,3,Cyton.brickVertexCount2,Cyton.b2);
+%  delete(brick_h)
+%  Cyton.brickmove(0.2345,0.03771,0.09823)
+% input('press  enter')
+% Cyton.pickBrick(0,-0.2,0.1)
+% Cyton.dropBrick(0.21,0,0.1,1,Cyton.brickVertexCount,Cyton.b);
+% % 
+% pickingLocation(1,2)=pickingLocation(1,1)-0.08  ; 
+% dropingLocation(1,2)=dropingLocation(1,2)-0.08  ; 
+% 
+% Cyton.pickBrick(pickingLocation(1,1),pickingLocation(1,2),pickingLocation(1,3))
+% Cyton.dropBrick(dropingLocation(1,1),dropingLocation(1,2),dropingLocation(1,3),i); 
+
+%% load('cyton_q.mat');
 % for i=120:5:15
 %     pos = Cyton.model.fkine(cyton_q(i,:))
 %     if pos(3,4)>0 
@@ -23,7 +55,8 @@ disp('first pose done')
 % for i =2:size(cyton_q)
 %% Pos= Cyton.model.fkine(cyton_q(1,:)); 
   imaqreset;
-   Cyton = UR10;
+%    Environment();
+Cyton = UR10;
 % create color and depth kinect videoinput objects
 colorVid = videoinput('kinect', 1);
 depthVid = videoinput('kinect', 2);
@@ -86,32 +119,77 @@ if  sum(depthMetaData.IsBodyTracked) >0
 skeletonJoints = depthMetaData.DepthJointIndices (:,:,depthMetaData.IsBodyTracked);
 hold on;
 
-for i = 1:24
+for i = 14:16
 
 X1 = [skeletonJoints(SkeletonConnectionMap(i,1),1,1); skeletonJoints(SkeletonConnectionMap(i,2),1,1)];
 Y1 = [skeletonJoints(SkeletonConnectionMap(i,1),2,1), skeletonJoints(SkeletonConnectionMap(i,2),2,1)];
 jointPos = depthMetaData.JointPositions(:,:,1);
 handPos = jointPos(8,:);
-robPose = handPos/8;
-jointX = robPose(1,1);
-jointY = robPose(1,3);
-jointZ = robPose(1,2);
-
-if jointX<0.35||jointX>-0.35||jointY<0.3||jointY>-0.3 ||jointZ<0.36 || jointZ>-0.65
+disp("Robot Position Changed")
+[jointX,jointY,jointZ]= transform2Local(handPos(1,1),handPos(1,2), handPos(1,3))
+% robPose =[ handPos(1,3)-0.2,handPos(1,1), handPos(1,2)];
+% jointX = robPose(1,1);
+% jointY = robPose(1,2);
+% jointZ = robPose(1,3);
+tansformed = [jointX,jointY,jointZ];
+%  if jointX<0.35||jointX>-0.35||jointY<0.3||jointY>-0.3 ||jointZ<0.36 || jointZ>-0.65
 %     if jointX-prevPos(1,1)>0.04 || jointY-prevPos(1,2)>0.04 || jointZ-prevPos(1,3)>0.04 
-          Cyton.RMRC(jointX,jointY,jointZ+0.04)
-        disp("Hand Position Changed")
-        disp(handPos)
-        disp("Robot Position Changed")
-        disp(robPose)
+          disp("Human hand Position Changed")
+        disp(handPos) 
+        disp("Goal Position Changed")
+        disp(tansformed)
+        
+         
+        
         disp('numbers of body detected')
         disp(nBodies)  
-%     end
+%      end
 
+if handPos(1,1) > 0.3 && Cyton.taskExecutionFlag==0
+    
+    Cyton.pickBrick1();
+end
+
+if handPos(1,3)<1 && Cyton.taskExecutionFlag==1
+   
+    Cyton.DropBrick1();
+end
+% 
+if handPos(1,1)>0.3 && Cyton.taskExecutionFlag==2
+    
+    Cyton.pickBrick2();
+end
+% 
+if handPos(1,3)<1 && Cyton.taskExecutionFlag==3
+    
+    Cyton.DropBrick2();
+end
+% 
+if handPos(1,1)>0.3 && Cyton.taskExecutionFlag==4
+    
+    Cyton.pickBrick3();
+end
+
+if handPos(1,3)<1 && Cyton.taskExecutionFlag==5
+    
+    Cyton.DropBrick3();
+    
+end
+if Cyton.taskExecutionFlag==6
+   disp('task executed') 
+end
+
+%     Cyton.pickBrick(jointX,jointY,jointZ);
     prevPos(1,1)= jointX;
     prevPos(1,2)= jointY;
     prevPos(1,3)= jointZ;
-end
+    
+    
+%  else
+   
+%     end
+ 
+  
 
 axis on;
 

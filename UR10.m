@@ -4,12 +4,22 @@ classdef UR10 < handle
         model;
         Brick_h;
         b;
+        b1;
+        b2;
+        b3;
+        b4;
         brickVertexCount;
+        brickVertexCount1;
+        brickVertexCount2;
+        brickVertexCount3;
+        brickVertexCount4;
         BrickPose;
         CollisionFlag = 0;
 %         q = zeros(1,7);  
         %> workspace
-        workspace = [-1.5 1.5 -1.5 1.5 -0.4 1.5];   
+        workspace = [-1.5 0.5 -1 1 -0.4 1.5];   
+        
+        taskExecutionFlag=0;
                
         %> If we have a tool model which will replace the final links model, combined ply file of the tool model and the final link models
         toolModelFilename = []; % Available are: 'DabPrintNozzleTool.ply';        
@@ -25,21 +35,41 @@ classdef UR10 < handle
                 self.toolModelFilename = toolModelAndTCPFilenames{1};
                 self.toolParametersFilename = toolModelAndTCPFilenames{2};
             end
-%                   Environment();
+%                      Environment();
+ [brick,a,VertexCount,Pose]=self.brickmove(0,-0.2,0.1);
+ [brick1,a1,VertexCount1,Pose1]=self.brickmove(0.041,-0.2,0.1);
+  [brick2,a2,VertexCount2,Pose2]=self.brickmove(-0.041,-0.2,0.1);
+%  [brick3,a3,VertexCount3,Pose3]=self.brickmove( -0.2400,-0.2,0.1);
+%  [brick4,a4,VertexCount4,Pose4]=self.brickmove(-0.32,-0.2,0.1);
+ 
+                self.Brick_h = [brick,brick1,brick2];
+%              self.Brick_h = [brick,brick1,brick2,brick3,brick4];
+             self.b = a;
+              self.b1 = a1;
+              self.b2 = a2;
+%              self.b3 = a3;
+%              self.b4 = a4;
+             self.brickVertexCount= VertexCount;
+              self.brickVertexCount1 =VertexCount1;
+              self.brickVertexCount2=VertexCount2;
+%              self.brickVertexCount3=VertexCount3;
+%              self.brickVertexCount4=VertexCount4;
+                self.BrickPose= [Pose, Pose1,Pose2];
+%              self.BrickPose= [Pose, Pose1, Pose2, Pose3, Pose4];
+             disp('brick set')
+                   
              self.GetUR10Robot();
+             
              self.PlotAndColourRobot();%robot,workspace);
+%              self.collision();
 %             self.movement();
-             input('Press enter to continue');
-%              [brick,a,VertexCount,Pose]=self.brickmove();
-%              self.Brick_h = brick;
-%              self.b = a;
-%              self.brickVertexCount= VertexCount;
-%              self.BrickPose= Pose;
-%              disp('brick set')
-             self.RMRC(0,-0.2,0.1);
+%               input('Press enter to continue');
+            
+%                   self.RMRC(0,-0.2,0.1);
+%                 self.RMRC(0.21,0,0.1);
 %                 self.RMRC(0.23,0,0.1);  
 
-            drawnow()            
+%             drawnow()            
 
         end
 
@@ -61,6 +91,7 @@ classdef UR10 < handle
             self.model = SerialLink([L1 L2 L3 L4 L5 L6 L7],'name',name);
             q = zeros(1,7);
             self.model.base = transl(base);
+            
         end
 
         %% PlotAndColourRobot
@@ -104,37 +135,59 @@ classdef UR10 < handle
                     continue;
                 end
             end
+            
+%              [brick,a,VertexCount,Pose]=self.brickmove();
+%              self.Brick_h = brick;
+%              self.b = a;
+%              self.brickVertexCount= VertexCount;
+%              self.BrickPose= Pose;
+            
         end
         
         
-
+%% Collision
+% function collision(self)
+%     centerpnt = [2,0,0];
+% side = 1.5;
+% plotOptions.plotFaces = true;
+% [vertex,faces,faceNormals] = RectangularPrism([0.21,-0.33,-0.39], [0.25,0.31,0.07],plotOptions);
+% [vertex,faces,faceNormals] = RectangularPrism([0.21,0.08,0.07], [0.25,0.31,0.15],plotOptions);
+% axis equal
+% camlight
+% 
+% tr = zeros(4,4,self.model.n+1);
+% tr(:,:,1) = self.model.base;
+% L = self.model.links;
+% for i = 1 : self.model.n
+%     tr(:,:,i+1) = tr(:,:,i) * trotz(q(i)+L(i).offset) * transl(0,0,L(i).d) * transl(L(i).a,0,0) * trotx(L(i).alpha);
+% end
+% end
              %% Movement        
-        function movement(self)
-
-  steps = 50;
-   q1 = self.model.getpos();                                                        % Derive joint angles for required end-effector transformation
-   T2 = transl(0,0,0);                                                         
-   q2 = self.model.ikcon(T2,q1);                                                  
-  
-
-    Move = jtraj(q1,q2,steps);
-           
-
-     self.model.plot(Move,'trail','r-') 
-%        self.model.animate(Move);
-           drawnow();
-
-        end
-        
+%         function movement(self)
+% 
+%   steps = 50;
+%    q1 = self.model.getpos();                                                        % Derive joint angles for required end-effector transformation
+%    T2 = transl(0,0,0);                                                         
+%    q2 = self.model.ikcon(T2,q1);                                                  
+%   
+% 
+%     Move = jtraj(q1,q2,steps);
+%            
+% 
+%      self.model.plot(Move,'trail','r-') 
+% %        self.model.animate(Move);
+%            drawnow();
+% 
+%         end
+%         
 
        
         
         %% Move RMRC Taken From Tutorial
         
-        function RMRC(self, goalX, goalY, goalZ)
-            
+        function [qMatrix,steps]=RMRC(self, goalX, goalY, goalZ)            
 t = 5;             % Total time (s)
-deltaT = 0.05;      % Control frequency
+deltaT = 0.10;      % Control frequency
 steps = t/deltaT;   % No. of steps for simulation
 delta = 2*pi/steps; % Small angle change
 epsilon = 0.1;      % Threshold value for manipulability/Damped Least Squares
@@ -201,7 +254,6 @@ for i = 1:steps-1
     qMatrix(i+1,:) = qMatrix(i,:) + deltaT*qdot(i,:);                         	% Update next joint state based on joint velocities
     positionError(:,i) = x(:,i+1) - T(1:3,4);                               % For plotting
     angleError(:,i) = deltaTheta;                                           % For plotting
-
     
             
 end
@@ -209,7 +261,12 @@ end
 % % 1.5) Plot the results
 % % figure(1)
 % plot3(x(1,:),x(2,:),x(3,:),'k.','LineWidth',1)
-self.model.plot(qMatrix,'trail','r-')
+% while(self.CollisionFlag == 0)
+
+    
+% end
+
+
 % self.BrickPose = makehgtform('translate',currentPos(1:3,4)');
 %             updatedPoints = [self.BrickPose * [self.b,ones(self.brickVertexCount,1)]']';
 %             self.Brick_h.Vertices = updatedPoints(:,1:3);
@@ -217,50 +274,16 @@ self.model.plot(qMatrix,'trail','r-')
     
 
 
-% for i = 1:7
-%     figure(2)
-%     subplot(3,2,i)
-%     plot(qMatrix(:,i),'k','LineWidth',1)
-%     title(['Joint ', num2str(i)])
-%     ylabel('Angle (rad)')
-%     refline(0,self.model.qlim(i,1));
-%     refline(0,self.model.qlim(i,2));
-%     
-%     figure(3)
-%     subplot(3,2,i)
-%     plot(qdot(:,i),'k','LineWidth',1)
-%     title(['Joint ',num2str(i)]);
-%     ylabel('Velocity (rad/s)')
-%     refline(0,0)
-% end
-% 
-% figure(4)
-% subplot(2,1,1)
-% plot(positionError'*1000,'LineWidth',1)
-% refline(0,0)
-% xlabel('Step')
-% ylabel('Position Error (mm)')
-% legend('X-Axis','Y-Axis','Z-Axis')
-% 
-% subplot(2,1,2)
-% plot(angleError','LineWidth',1)
-% refline(0,0)
-% xlabel('Step')
-% ylabel('Angle Error (rad)')
-% legend('Roll','Pitch','Yaw')
-% figure(5)
-% plot(m,'k','LineWidth',1)
-% refline(0,epsilon)
-% title('Manipulability')
-        end
+
+end
         
          %% Move Brick
-         function [Brick_h,b,brickVertexCount,BrickPose]=brickmove(self)
+function [Brick_h,b,brickVertexCount,BrickPose]=brickmove(self,posx,posy,posz)
                    %Brick 
-                  
+         
         [f,b,data] = plyread('brick.ply','tri');
         vertexColours = [data.vertex.red, data.vertex.green, data.vertex.blue] / 255;
-        Brick_h = trisurf(f,b(:,1) + 0,b(:,2) - 0.2, b(:,3) + 0.1 ...
+        Brick_h = trisurf(f,b(:,1) + posx,b(:,2) +posy, b(:,3) +posz ...
             ,'FaceVertexCData',vertexColours,'EdgeColor','interp','EdgeLighting','flat')
         
         brickVertexCount = size(b,1);
@@ -268,19 +291,62 @@ self.model.plot(qMatrix,'trail','r-')
         hold on; 
 
         
-         end
-         
-         function detectCollision(self,qMatrix)
-           
+end
 
-                if wall_1==true || wall_2 == true
-                self.CollisionFlag =1;
-                disp('avoiding collition')
+function dropBrick(self,goalX,goalY,goalZ,brickNum,va,ba)
+    [qMatrix,steps]= self.RMRC(goalX,goalY,goalZ);
+    
+   self.detectCollision(qMatrix);
+    if(self.CollisionFlag == 0)  
+        for c=1:steps
+     self.model.plot(qMatrix(c,:),'trail','r-')
+    currPos= self.model.fkine(qMatrix(c,:));
+    self.BrickPose = makehgtform('translate',currPos(1:3,4)');
+    updatedPoints = [self.BrickPose * [ba,ones(va,1)]']';
+           self.Brick_h(1,brickNum).Vertices = updatedPoints(:,1:3);
+           drawnow();   
+        end
+       
+    else
+       self.pickBrick(0.15,0,0.3);
+    end 
+%         self.model.fkine(qMatrix)
+end
 
-                end
-         end
-        
-             %% IsIntersectionPointInsideTriangle
+function pickBrick(self,goalX,goalY,goalZ)
+    [qMatrix1,steps]= self.RMRC(goalX,goalY,goalZ);
+   self.detectCollision(qMatrix1);
+    if(self.CollisionFlag == 0)  
+ 
+     self.model.plot(qMatrix1,'trail','r-')    
+    else
+       [qmatrix, steps]= self.RMRC(-0.1,0,0.25);
+       self.model.plot(qmatrix,'trail','r-')   
+    end 
+end
+function detectCollision(self,qMatrix)
+           plotOptions.plotFaces = false;
+[vertex,faces,faceNormals] = RectangularPrism([0.25,-0.33,-0.39], [0.29,0.31,0.07],plotOptions);
+[vertex1,faces1,faceNormals1] = RectangularPrism([0.25,0.08,0.07], [0.29,0.31,0.15],plotOptions);
+[vertex2,faces2,faceNormals2] = RectangularPrism([-0.15,0.15,-0.4], [0.15,-0.38,-0.08],plotOptions);
+[vertex3,faces3,faceNormals3] = RectangularPrism([-0.06,-0.12,-0.09], [0.06,-0.265,0.065],plotOptions);
+axis equal
+camlight
+
+wall_1= IsCollision(self.model,qMatrix,faces,vertex,faceNormals);
+wall_2= IsCollision(self.model,qMatrix,faces1,vertex1,faceNormals1);
+wall_3= IsCollision(self.model,qMatrix,faces2,vertex2,faceNormals2);
+wall_4= IsCollision(self.model,qMatrix,faces3,vertex3,faceNormals3);
+
+if wall_1==true || wall_2 == true || wall_3 == true || wall_4 == true
+self.CollisionFlag =1;
+disp('avoiding collision')
+
+end
+
+ 
+end
+    %% IsIntersectionPointInsideTriangle
 % Given a point which is known to be on the same plane as the triangle
 % determine if the point is 
 % inside (result == 1) or 
@@ -367,6 +433,52 @@ for i = 1:length(links)
     transl(0,0, L.d) * transl(L.a,0,0) * trotx(L.alpha);
     transforms(:,:,i + 1) = current_transform;
 end
+end
+
+function pickBrick1(self)
+  
+    self.pickBrick(0,-0.2,0.1);
+   
+   self.taskExecutionFlag = 1
+    
+end
+function DropBrick1(self)
+   self.dropBrick(0.2,0,0.25,1,self.brickVertexCount,self.b);
+   self.dropBrick(0.27,0.05,0.09,1,self.brickVertexCount,self.b);
+   self.pickBrick(0.2,0,0.25);
+   self.taskExecutionFlag = 2;
+end
+function pickBrick2(self)
+  
+    self.pickBrick(0.041,-0.2,0.1);
+   
+     self.taskExecutionFlag = 3;
+    
+end
+
+function DropBrick2(self)
+   self.dropBrick(0.2,0,0.25,2,self.brickVertexCount1,self.b1);
+   self.dropBrick(0.27,-0.04,0.09,2,self.brickVertexCount1,self.b1);
+   self.pickBrick(0.2,0,0.25);
+   self.taskExecutionFlag = 4;
+   
+end
+
+function pickBrick3(self)
+  
+    
+    self.pickBrick(-0.041,-0.2,0.1);
+   
+     self.taskExecutionFlag = 5;
+    
+end
+
+function DropBrick3(self)
+   self.dropBrick(0.1,-0.2,0.3,3,self.brickVertexCount2,self.b2);
+   self.dropBrick(0.25,-0.09,0.085,3,self.brickVertexCount2,self.b2);
+   self.pickBrick(0.2,0,0.25);
+   self.taskExecutionFlag = 6;
+   
 end
 
     end
