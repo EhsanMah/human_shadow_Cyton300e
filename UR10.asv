@@ -1,7 +1,5 @@
 classdef UR10 < handle
     % Class for Cyton 300e robot simulation
-    % This class was developed using a provided UR10 class of 
-    % Peter Corke's Robotics Toolbox
     properties
         %> Robot Properties
         model;  %robot SerialLink Model
@@ -57,8 +55,7 @@ classdef UR10 < handle
         end
 
         %% GetUR10Robot
-        % This Function creates a Cyton 300e Serial Link Model with
-        % required DH Parameters
+        % This Function creates a Cyton 300e Serial Link Model to 
         function GetUR10Robot(self)
             pause(0.001);
             name = ['UR_10_',datestr(now,'yyyymmddTHHMMSSFFF')];
@@ -120,9 +117,53 @@ classdef UR10 < handle
                 end
             end
             
+%              [brick,a,VertexCount,Pose]=self.brickmove();
+%              self.Brick_h = brick;
+%              self.b = a;
+%              self.brickVertexCount= VertexCount;
+%              self.BrickPose= Pose;
             
         end
-          
+        
+        
+%% Collision
+% function collision(self)
+%     centerpnt = [2,0,0];
+% side = 1.5;
+% plotOptions.plotFaces = true;
+% [vertex,faces,faceNormals] = RectangularPrism([0.21,-0.33,-0.39], [0.25,0.31,0.07],plotOptions);
+% [vertex,faces,faceNormals] = RectangularPrism([0.21,0.08,0.07], [0.25,0.31,0.15],plotOptions);
+% axis equal
+% camlight
+% 
+% tr = zeros(4,4,self.model.n+1);
+% tr(:,:,1) = self.model.base;
+% L = self.model.links;
+% for i = 1 : self.model.n
+%     tr(:,:,i+1) = tr(:,:,i) * trotz(q(i)+L(i).offset) * transl(0,0,L(i).d) * transl(L(i).a,0,0) * trotx(L(i).alpha);
+% end
+% end
+             %% Movement        
+%         function movement(self)
+% 
+%   steps = 50;
+%    q1 = self.model.getpos();                                                        % Derive joint angles for required end-effector transformation
+%    T2 = transl(0,0,0);                                                         
+%    q2 = self.model.ikcon(T2,q1);                                                  
+%   
+% 
+%     Move = jtraj(q1,q2,steps);
+%            
+% 
+%      self.model.plot(Move,'trail','r-') 
+% %        self.model.animate(Move);
+%            drawnow();
+% 
+%         end
+%         
+
+       
+        
         %% Move RMRC Taken From Tutorial
         
         function [qMatrix,steps]=RMRC(self, goalX, goalY, goalZ)            
@@ -198,9 +239,26 @@ for i = 1:steps-1
             
 end
 
+% % 1.5) Plot the results
+% % figure(1)
+% plot3(x(1,:),x(2,:),x(3,:),'k.','LineWidth',1)
+% while(self.CollisionFlag == 0)
+
+    
+% end
+
+
+% self.BrickPose = makehgtform('translate',currentPos(1:3,4)');
+%             updatedPoints = [self.BrickPose * [self.b,ones(self.brickVertexCount,1)]']';
+%             self.Brick_h.Vertices = updatedPoints(:,1:3);
+%            drawnow();
+    
+
+
+
 end
         
- %% Move Brick
+         %% Move Brick
 function [Brick_h,b,brickVertexCount,BrickPose]=brickmove(self,posx,posy,posz)
                    %Brick 
          
@@ -233,6 +291,7 @@ function dropBrick(self,goalX,goalY,goalZ,brickNum,va,ba)
     else
        self.pickBrick(0.15,0,0.3);
     end 
+%         self.model.fkine(qMatrix)
 end
 
 function pickBrick(self,goalX,goalY,goalZ)

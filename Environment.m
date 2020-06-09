@@ -1,7 +1,9 @@
 %% Environment 
+% This script sets up all the additional component and safety features in the environment.
+% All the .Ply / CAD files were taken from opensource resources. Reference included with the codes 
 
-% %% Floor https://au.mathworks.com/matlabcentral/answers/300826-how-do-i-insert-an-image-in-my-2-d-and-3-d-plots-in-matlab-8-2-r2013b
-% axis equal;
+%% Floor        [Taken From: https://au.mathworks.com/matlabcentral/answers/300826-how-do-i-insert-an-image-in-my-2-d-and-3-d-plots-in-matlab-8-2-r2013b ]
+% Plots floor texture in the environment
 hold on;      % Add to the plot
 xlabel('x');
 ylabel('y');
@@ -14,9 +16,7 @@ surf(xImage,yImage,zImage,...    % Plot the surface
      'CData',img,...
      'FaceColor','texturemap');
  
-% [xSphere,ySphere,zSphere] = sphere(16);          % Points on a sphere
-% scatter3(xSphere(:),ySphere(:),zSphere(:),'.');  % Plot the points
-% axis equal;   % Make the axes scales match
+
 hold on;      % Add to the plot
 xlabel('x');
 ylabel('y');
@@ -29,7 +29,7 @@ surf(xImage,yImage,zImage,...    % Plot the surface
      'CData',img,...
      'FaceColor','texturemap'); 
 
-%  axis equal;   % Make the axes scales match
+
 hold on;      % Add to the plot
 xlabel('x');
 ylabel('y');
@@ -65,7 +65,8 @@ zImage = [0.2 0.2; -0.2 -0.2];   % The z data for the image corners
 surf(xImage,yImage,zImage,...    % Plot the surface
      'CData',img,...
      'FaceColor','texturemap'); 
-%% TABLE
+%% Platform        [Taken From:https://grabcad.com/library?page=6&sort=most_downloaded&tags=trolley]
+% Plots a platform in the simulation environment to place the robot
 [f,v,data] = plyread('Trolley.ply','tri');
 vertexColours = [data.vertex.red, data.vertex.green, data.vertex.blue] / 255;
 
@@ -83,7 +84,8 @@ vertexColours = [data.vertex.red, data.vertex.green, data.vertex.blue] / 255;
 hold on; 
 
 %% Fences
-% 
+% Plots Fences around the workspace to stop anyone to enter while the robot
+% is in operation.
         %Fence 1
         [f,a,data] = plyread('fence.ply','tri');
         vertexColours = [data.vertex.red, data.vertex.green, data.vertex.blue] / 255;
@@ -112,7 +114,9 @@ hold on;
             ,'FaceVertexCData',vertexColours,'EdgeColor','interp','EdgeLighting','flat');
         hold on;
         
-%% Bricks
+%% Bricks       [Taken From: http://done3d.com/concrete-column/]
+% Plots a half constructed brick wall and a stack of loose brick.
+
         %Brick Wall
         [f,a,data] = plyread('brickwall.ply','tri');
         vertexColours = [data.vertex.red, data.vertex.green, data.vertex.blue] / 255;
@@ -126,19 +130,9 @@ hold on;
         fence_h = trisurf(f,a(:,1) + 0,a(:,2) - 0.2, a(:,3) -0.08 ...
             ,'FaceVertexCData',vertexColours,'EdgeColor','interp','EdgeLighting','flat');
         hold on;
-        
-        
-        
-%         %Brick 
-%         [f,b,data] = plyread('brick.ply','tri');
-%         vertexColours = [data.vertex.red, data.vertex.green, data.vertex.blue] / 255;
-%         Brick_h = trisurf(f,b(:,1) + 0,b(:,2) - 0.2, b(:,3) + 0.1 ...
-%             ,'FaceVertexCData',vertexColours,'EdgeColor','interp','EdgeLighting','flat')
-%         
-%         brickVertexCount = size(b,1);
-%         BrickPose = eye(6);
-%         hold on; 
- %% Emergency Stop Button
+ %% Emergency Stop Button       [Taken From: https://sketchfab.com/3d-models/emergency-stop-button-012e4809a41445ca9de17286f677fabb#download ]
+ % Plots an Emergency Stop button outside of the workspace to ensure safety
+ %  This can be accessed if any unexpected event occurs and kill the operation.  
  [f,v,data] = plyread('E-button.ply','tri');
 vertexColours = [data.vertex.red, data.vertex.green, data.vertex.blue] / 255;
 
