@@ -15,8 +15,8 @@ clc
 clf
 %% Computer Vision Algorithm        [Taken From: https://au.mathworks.com/help/supportpkg/kinectforwindowsruntime/ug/plot-skeletons-with-the-kinect-v2.html?s_tid=answers_rc2-1_p4_BOTH ]
 imaqreset;
-Environment();
-Cyton = UR10;
+Environment();              % Setting up environment 
+Cyton = UR10;               % Creating an object for the robot class ( Please check UR10 file for references of resources)
 % create color and depth kinect videoinput objects
 colorVid = videoinput('kinect', 1);
 depthVid = videoinput('kinect', 2);

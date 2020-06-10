@@ -19,7 +19,10 @@ function varargout = newgui(varargin)
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
-
+%
+% All referecnce of used sources are provided on Assignment2.m and UR10.m
+% file
+%
 % Edit the above text to modify the response to help newgui
 
 % Last Modified by GUIDE v2.5 09-Jun-2020 15:58:16

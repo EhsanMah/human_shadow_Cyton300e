@@ -123,7 +123,14 @@ classdef UR10 < handle
             
         end
           
-        %% Move RMRC Taken From Tutorial
+        %% RMRC 
+        % BRIEF: This function calculates qMatrix for all joint angles to move
+        % between Positions using Resolved Motion Rate Control(RMRC)
+        % REFERENCE: This function is developed in reference to codes
+        % provided in Lab9Solution_Question1.m 
+        % DESCRIPTION:  qMatrix are calculated for each waypoints in the calculated
+        % trajectory considering required joint velocity rate for all seven
+        % joints. 
         
         function [qMatrix,steps]=RMRC(self, goalX, goalY, goalZ)            
 t = 5;             % Total time (s)
@@ -143,7 +150,7 @@ positionError = zeros(3,steps); % For plotting trajectory error
 angleError = zeros(3,steps);    % For plotting trajectory error
 currentAngles = self.model.getpos();
 currentPos  = self.model.fkine(currentAngles);
-% 1.3) Set up trajectory, initial pose
+
 
 
 s = lspb(0,1,steps);                % Trapezoidal trajectory scalar
@@ -201,9 +208,16 @@ end
 end
         
  %% Move Brick
+        % BRIEF: This function plots bricks with configurable positions
+        % 
+        % REFERENCE: CAD models were taken from http://done3d.com/concrete-column/
+        %
+        % DESCRIPTION:  This function takes position as input and plots a
+        % brick in the environment which can be moved with the robot's
+        % end-effector.
+       
 function [Brick_h,b,brickVertexCount,BrickPose]=brickmove(self,posx,posy,posz)
-                   %Brick 
-         
+                  
         [f,b,data] = plyread('brick.ply','tri');
         vertexColours = [data.vertex.red, data.vertex.green, data.vertex.blue] / 255;
         Brick_h = trisurf(f,b(:,1) + posx,b(:,2) +posy, b(:,3) +posz ...
@@ -216,6 +230,15 @@ function [Brick_h,b,brickVertexCount,BrickPose]=brickmove(self,posx,posy,posz)
         
 end
 
+%% dropBrick
+        % BRIEF: This function is used to animate the movement of the robot
+        % carrying the brick from the brick stack to the wall .
+        % 
+        % DESCRIPTION:  This function takes position and the brick
+        % properties as input and animates the movement of the end-effector
+        % with an specified brick using a qMatrix provided by RMRC function
+        % It also checks a possible collision while moving towards a goal 
+        
 function dropBrick(self,goalX,goalY,goalZ,brickNum,va,ba)
     [qMatrix,steps]= self.RMRC(goalX,goalY,goalZ);
     
@@ -235,6 +258,13 @@ function dropBrick(self,goalX,goalY,goalZ,brickNum,va,ba)
     end 
 end
 
+%% pickBrick
+        % BRIEF: This function is used to animate the movement of the robot
+        % 
+        % DESCRIPTION:  This function takes goal position as input and animates the movement 
+        % of the end-effector using a qMatrix provided by RMRC function
+        % It also checks a possible collision while moving towards a goal 
+        
 function pickBrick(self,goalX,goalY,goalZ)
     [qMatrix1,steps]= self.RMRC(goalX,goalY,goalZ);
    self.detectCollision(qMatrix1);
@@ -246,9 +276,23 @@ function pickBrick(self,goalX,goalY,goalZ)
        self.model.plot(qmatrix,'trail','r-')   
     end 
 end
+
+%% detectCollision
+        % BRIEF: This Function checks if the robot collides with any of the possible object 
+        %in the environment that can obstruct robot movement 
+        % 
+        % REFERENCE: Functions used inside theese functions were taken from
+        % tutorial solutions. 
+        %
+        % DESCRIPTION:  This function is used to to plot rectangular Prism on the
+        % possible objects that it can collide with and checks if the robot
+        % will be colliding to any of them while moving in the 
+        % planned trajectory.
+        
 function detectCollision(self,qMatrix)
            plotOptions.plotFaces = false;
-[vertex,faces,faceNormals] = RectangularPrism([0.25,-0.33,-0.39], [0.29,0.31,0.07],plotOptions);
+% RectangularPrism()function was used from the provided script in Lab 5 
+[vertex,faces,faceNormals] = RectangularPrism([0.25,-0.33,-0.39], [0.29,0.31,0.07],plotOptions); 
 [vertex1,faces1,faceNormals1] = RectangularPrism([0.25,0.08,0.07], [0.29,0.31,0.15],plotOptions);
 [vertex2,faces2,faceNormals2] = RectangularPrism([-0.15,0.15,-0.4], [0.15,-0.38,-0.08],plotOptions);
 [vertex3,faces3,faceNormals3] = RectangularPrism([-0.06,-0.12,-0.09], [0.06,-0.265,0.065],plotOptions);
@@ -268,7 +312,7 @@ end
 
  
 end
-    %% IsIntersectionPointInsideTriangle
+ %% IsIntersectionPointInsideTriangle               [ Taken From: Lab5 Solutions]
 % Given a point which is known to be on the same plane as the triangle
 % determine if the point is 
 % inside (result == 1) or 
@@ -304,7 +348,7 @@ end
 result = 1;                      % intersectP is in Triangle
 end
 
-%% IsCollision
+%% IsCollision                  [ Taken From: Lab5 Solutions]
 % This is based upon the output of questions 2.5 and 2.6
 % Given a robot model (robot), and trajectory (i.e. joint state vector) (qMatrix)
 % and triangle obstacles in the environment (faces,vertex,faceNormals)
@@ -336,7 +380,7 @@ for qIndex = 1:size(qMatrix,1)
 end
 end
 
-%% GetLinkPoses
+%% GetLinkPoses                     [ Taken From: Lab5 Solutions]
 % q - robot joint angles
 % robot -  seriallink robot model
 % transforms - list of transforms
@@ -357,6 +401,7 @@ for i = 1:length(links)
 end
 end
 
+%% Functions to pick and drop individual bricks
 function pickBrick1(self)
   
     self.pickBrick(0,-0.2,0.1);
